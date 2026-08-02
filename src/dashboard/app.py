@@ -105,15 +105,11 @@ TRANSLATIONS = {
     }
 }
 
-# --- Data Generator ---
+# --- Data Generator (FIXED: freq='h') ---
 def generate_marine_data(hours=24):
     end_time = datetime.now()
     start_time = end_time - timedelta(hours=hours)
-
     times = pd.date_range(start=start_time, end=end_time, freq='h')
-=======
-   times = pd.date_range(start=start_time, end=end_time, freq='h')
-
     vessels = []
     for i in range(1, 61):
         is_anomalous = random.random() < 0.2
@@ -368,19 +364,19 @@ with st.sidebar:
 if st.session_state.logged_in:
     st.markdown(f'<div class="main-header">{t["title"]}</div>', unsafe_allow_html=True)
     st.markdown(f'<div class="sub-header">{t["subtitle"]}</div>', unsafe_allow_html=True)
-    
+
     df = st.session_state.vessel_data
     df_sst = st.session_state.sst_data
     df_chl = st.session_state.chl_data
     df_weather = st.session_state.weather_data
     anomalies = detect_illegal_fishing(df)
-    
-    # --- TABS USING INDEX (NO UNPACKING) ---
+
+    # --- TABS (index based) ---
     tabs = st.tabs([
         "📊 Dashboard", "🚢 Vessels", "🪸 Coral", "🌿 Algae", "🎣 Fishing Zones",
         "🌦️ Weather", "🛰️ Satellite", "📈 Analytics", "🧠 AI Vision"
     ])
-    
+
     # --- TAB 0: DASHBOARD ---
     with tabs[0]:
         col1, col2, col3, col4, col5 = st.columns(5)
@@ -400,7 +396,7 @@ if st.session_state.logged_in:
         with col5:
             bloom = predict_algal_bloom(df_sst, df_chl, df_weather)
             st.metric("🌿 Bloom Risk", f"{bloom:.0f}%")
-        
+
         st.subheader("🗺️ Live Marine Map")
         map_style = "carto-darkmatter" if st.session_state.dark_mode else "carto-positron"
         fig = go.Figure()
@@ -426,14 +422,14 @@ if st.session_state.logged_in:
             margin=dict(l=0, r=0, t=0, b=0)
         )
         st.plotly_chart(fig, use_container_width=True)
-        
+
         st.subheader("🔔 Recent Alerts")
         if sus > 0:
             for _, row in anomalies.head(3).iterrows():
                 st.warning(f"🚨 Vessel {row['vessel_id']}: {row['reason']}")
         else:
             st.success("✅ No active alerts")
-    
+
     # --- TAB 1: VESSELS ---
     with tabs[1]:
         st.subheader("🚢 Vessel Activity & Illegal Fishing Detection")
@@ -453,7 +449,7 @@ if st.session_state.logged_in:
                     st.divider()
             else:
                 st.success("No suspicious vessels detected")
-    
+
     # --- TAB 2: CORAL ---
     with tabs[2]:
         st.subheader("🪸 Coral Bleaching Prediction")
@@ -472,7 +468,7 @@ if st.session_state.logged_in:
                                 color_continuous_scale='RdBu')
         fig.update_layout(mapbox=dict(center=dict(lat=6.927, lon=79.861), zoom=8))
         st.plotly_chart(fig, use_container_width=True)
-    
+
     # --- TAB 3: ALGAE ---
     with tabs[3]:
         st.subheader("🌿 Harmful Algal Bloom Prediction")
@@ -491,7 +487,7 @@ if st.session_state.logged_in:
                             title="Chlorophyll Concentration",
                             color_continuous_scale='Viridis')
             st.plotly_chart(fig, use_container_width=True)
-    
+
     # --- TAB 4: FISHING ZONES ---
     with tabs[4]:
         st.subheader("🎣 Sustainable Fishing Zone Recommendations")
@@ -506,7 +502,7 @@ if st.session_state.logged_in:
             st.plotly_chart(fig, use_container_width=True)
         with col2:
             st.dataframe(zones[['lat', 'lon', 'status', 'sst', 'chlorophyll']].head(10))
-    
+
     # --- TAB 5: WEATHER ---
     with tabs[5]:
         st.subheader("🌦️ Weather & Ocean Conditions")
@@ -524,7 +520,7 @@ if st.session_state.logged_in:
         fig.add_trace(go.Scatter(x=df_weather['timestamp'], y=df_weather['wave_height'], name='Wave Height'))
         fig.update_layout(title="Weather Trends")
         st.plotly_chart(fig, use_container_width=True)
-    
+
     # --- TAB 6: SATELLITE ---
     with tabs[6]:
         st.subheader("🛰️ Satellite Image Viewer")
@@ -545,7 +541,7 @@ if st.session_state.logged_in:
         st.caption("🔄 Drag the slider below to compare changes")
         st.slider("Comparison Overlay", 0, 100, 50, key="satellite_slider")
         st.caption("Swipe to compare changes in vegetation, water color, and coastal features")
-    
+
     # --- TAB 7: ANALYTICS ---
     with tabs[7]:
         st.subheader("📈 Analytics Dashboard")
@@ -558,19 +554,19 @@ if st.session_state.logged_in:
             fig = px.box(df, y='speed', color='is_anomalous',
                         title="Speed Distribution by Vessel Type")
             st.plotly_chart(fig, use_container_width=True)
-        
+
         if st.button("📄 Generate Report"):
             report = f"""
             OCEAN GUARDIAN SYSTEM - REPORT
             Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}
             User: {st.session_state.username} ({st.session_state.user_role})
-            
+
             SUMMARY
             - Total Vessels: {len(df['vessel_id'].unique())}
             - Suspicious Vessels: {len(anomalies['vessel_id'].unique())}
             - Coral Bleaching Risk: {predict_coral_bleaching(df_sst)['risk']}
             - Algal Bloom Risk: {predict_algal_bloom(df_sst, df_chl, df_weather):.1f}%
-            
+
             SUSPICIOUS VESSELS
             {anomalies[['vessel_id', 'speed', 'risk_score', 'reason']].to_string() if len(anomalies)>0 else 'None'}
             """
@@ -580,14 +576,14 @@ if st.session_state.logged_in:
                 file_name=f"ocean_guardian_report_{datetime.now().strftime('%Y%m%d')}.txt",
                 mime="text/plain"
             )
-    
+
     # --- TAB 8: AI VISION ---
     with tabs[8]:
         st.subheader("🧠 AI Vision – Satellite Image Analysis")
         st.caption("Live demonstration of AI segmentation and object detection on satellite imagery")
-        
+
         image_url = "https://eoimages.gsfc.nasa.gov/ve/1473/trincomalee_oli_2018031_lrg.jpg"
-        
+
         with st.spinner("Loading satellite image..."):
             try:
                 img = load_image_from_url(image_url)
@@ -596,15 +592,15 @@ if st.session_state.logged_in:
                 st.error("Could not load image. Using fallback placeholder.")
                 img = Image.new('RGB', (800, 400), color='green')
                 st.session_state.sat_img = img
-        
+
         img = st.session_state.sat_img
-        
+
         sub_tab1, sub_tab2 = st.tabs(["🖼️ Image Segmentation", "🚢 Object Detection"])
-        
+
         with sub_tab1:
             st.subheader("Semantic Segmentation (U-Net / DeepLabV3+ style)")
             st.caption("The AI classifies each pixel into categories (Water, Land, Vegetation, etc.)")
-            
+
             col_orig, col_seg = st.columns(2)
             with col_orig:
                 st.image(img, caption="Original Satellite Image", width="stretch")
@@ -614,28 +610,28 @@ if st.session_state.logged_in:
                         seg_img = segment_image_kmeans(img, n_clusters=4)
                         st.session_state.segmented_img = seg_img
                     st.image(st.session_state.segmented_img, caption="AI Segmentation Map", width="stretch")
-            
+
             st.markdown("**Legend:** 🔵 Water · 🟢 Land · 🟡 Vegetation · 🔴 Built-up/Sand")
             st.caption("Clusters are assigned based on color similarity – this is a simplified demo of how U-Net would segment the image.")
-        
+
         with sub_tab2:
             st.subheader("Object Detection (YOLOv11 style)")
             st.caption("The AI detects and classifies vessels and structures with confidence scores.")
-            
+
             if st.session_state.detection_img is None:
                 w, h = img.size
                 detections = generate_mock_detections(w, h)
                 det_img = draw_detection_boxes(img, detections)
                 st.session_state.detection_img = det_img
                 st.session_state.detections = detections
-            
+
             st.image(st.session_state.detection_img, caption="AI Detection Results", width="stretch")
-            
+
             df_det = pd.DataFrame(st.session_state.detections, columns=['x1', 'y1', 'x2', 'y2', 'Label', 'Confidence'])
             df_det['Confidence'] = (df_det['Confidence'] * 100).round(0).astype(int)
             df_det = df_det[['Label', 'Confidence']]
             st.dataframe(df_det, use_container_width=True)
-            
+
             st.caption("🚨 **Illegal Fishing Alert:** 3 vessels detected inside the Marine Protected Area!")
 
 # --- Chatbot ---
@@ -664,7 +660,3 @@ with st.sidebar:
         response = get_chat_response(user_input, df, anomalies, st.session_state.language)
         st.session_state.chat_history.append({"role": "assistant", "content": response})
         st.rerun()
-
-
-
-
