@@ -13,7 +13,7 @@ venv.bak/
 # Streamlit
 .streamlit/
 
-# Data and models (large files)
+# Data and models
 data/*.csv
 data/*.nc
 models/*.pkl
@@ -27,3 +27,8 @@ models/*.h5
 
 # Logs
 logs/*.log
+
+# ngrok
+ngrok.exe
+ngrok.zip
+ngrok.yml
