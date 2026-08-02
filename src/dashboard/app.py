@@ -109,7 +109,7 @@ TRANSLATIONS = {
 def generate_marine_data(hours=24):
     end_time = datetime.now()
     start_time = end_time - timedelta(hours=hours)
-    times = pd.date_range(start=start_time, end=end_time, freq='H')
+   times = pd.date_range(start=start_time, end=end_time, freq='h')
     vessels = []
     for i in range(1, 61):
         is_anomalous = random.random() < 0.2
